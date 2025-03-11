@@ -94,3 +94,7 @@ contract BackdoorChallenge is Test {
         assertEq(token.balanceOf(recovery), AMOUNT_TOKENS_DISTRIBUTED);
     }
 }
+
+contract AttackBackdoor {
+    
+}
