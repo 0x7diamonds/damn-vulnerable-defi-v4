@@ -132,8 +132,6 @@ contract AttackClimber {
 }
 contract NewVault is ClimberVault {
     using SafeERC20 for IERC20;
-
-    /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
     }
