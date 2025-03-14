@@ -10,9 +10,3 @@ On the timelock, only an account with a “Proposer” role can schedule actions
 
 You must rescue all tokens from the vault and deposit them into the designated recovery account.
 
-
-@audit
-step 1: call grantRole to change PROPOSER_ROLE
-step 2: Call schedule function with 0 delay
-step 3: Call execute function
-step 4: upgrade ClimberVault to sweep all the funds
