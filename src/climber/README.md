@@ -9,3 +9,9 @@ On the vault there’s an additional role with powers to sweep all tokens in cas
 On the timelock, only an account with a “Proposer” role can schedule actions that can be executed 1 hour later.
 
 You must rescue all tokens from the vault and deposit them into the designated recovery account.
+
+
+@audit
+step 1: call grantRole to change PROPOSER_ROLE
+step 2: Call schedule function with 0 delay
+step 3: Call execute function
