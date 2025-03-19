@@ -124,6 +124,7 @@ contract WalletMiningChallenge is Test {
      * CODE YOUR SOLUTION HERE
      */
     function test_walletMining() public checkSolvedByPlayer {
+        // reference: https://hackmd.io/@SunWeb3Sec/rkwkCGt6R#13-Wallet-Mining
         // Find the nonce with CREATE2
         address[] memory _owners = new address[](1);
         _owners[0] = user;
