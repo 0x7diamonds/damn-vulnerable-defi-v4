@@ -85,3 +85,22 @@ contract ABISmugglingChallenge is Test {
         assertEq(token.balanceOf(recovery), VAULT_TOKEN_BALANCE, "Not enough tokens in recovery account");
     }
 }
+
+contract AttackABISmuggling {
+    SelfAuthorizedVault public vault;
+    IERC20 public token;
+    address public player;
+    address public recovery;
+
+    constructor(address _vault, address _token, address _recovery) {
+        vault = SelfAuthorizedVault(_vault);
+        token = IERC20(_token);
+        recovery = _recovery;
+        player = msg.sender;
+    }
+
+    function attack() public {
+        bytes4 executeSelector = vault.execute.selector;
+        bytes memory 
+    }
+}
