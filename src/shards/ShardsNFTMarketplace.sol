@@ -162,7 +162,7 @@ contract ShardsNFTMarketplace is IShardsNFTMarketplace, IERC721Receiver, ERC1155
         purchase.cancelled = true;
 
         emit Cancelled(offerId, purchaseIndex);
-
+        // @audit mulDivUp makes the result rounded up, which is completely different from mulDivDown in fill function
         paymentToken.transfer(buyer, purchase.shards.mulDivUp(purchase.rate, 1e6));
     }
 
