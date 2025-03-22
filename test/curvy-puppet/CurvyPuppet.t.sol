@@ -184,3 +184,63 @@ contract CurvyPuppetChallenge is Test {
         assertEq(IERC20(curvePool.lp_token()).balanceOf(player), 0, "Player still has LP tokens");
     }
 }
+interface IAaveFlashloan {
+    function flashLoan(
+        address receiverAddress,
+        address[] calldata assets,
+        uint256[] calldata amounts,
+        uint256[] calldata modes,
+        address onBehalfOf,
+        bytes calldata params,
+        uint16 referralCode
+    ) external;
+}
+interface IBalancerVault {
+
+    function flashLoan(
+        address recipient,
+        address[] memory tokens,
+        uint256[] memory amounts,
+        bytes memory userData
+    ) external;
+
+}
+
+contract AttackCurvyPuppet {
+    IStableSwap public curvePool;
+    CurvyPuppetLending public lending;
+    IERC20 public curveLpToken;
+    address public player;
+    uint256 public treasuryLpBalance;
+    IERC20 stETH;
+    address treasury;
+    DamnValuableToken dvt;
+        IPermit2 constant permit2 = IPermit2(0x000000000022D473030F116dDEE9F6B43aC78BA3);
+        IAaveFlashloan AaveV2 = IAaveFlashloan(0x7d2768dE32b0b80b7a3454c06BdAc94A69DDc7A9);
+        IBalancerVault Balancer = IBalancerVault(0xBA12222222228d8Ba445958a75a0704d566BF2C8);
+
+    function manipulateCurvePool() public {
+
+    }
+
+    function removeLiquidity() public {
+
+    }
+
+    function attack() public {
+
+    }
+
+    function executeOperation() external returns(bool) {
+
+    }
+
+    function receiveFlashloan() external {
+
+    }
+
+    receive() external payable {
+
+    }
+
+}
