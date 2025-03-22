@@ -158,7 +158,9 @@ contract CurvyPuppetChallenge is Test {
      * CODE YOUR SOLUTION HERE
      */
     function test_curvyPuppet() public checkSolvedByPlayer {
-        
+        IERC20 curveLpToken = IERC20(curvePool.lp_token());
+
+        AttackCurvyPuppet attacker = new AttackCurvyPuppet(curvePool, lending, curveLpToken, address(player), TREASURY_LP_BALANCE, stETH, weth, address(treasury), dvt);
     }
 
     /**
