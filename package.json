@@ -1,0 +1,8 @@
+{
+  "name": "damn-vulnerable-defi-v4",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/0x7diamonds/damn-vulnerable-defi-v4",
+  "author": "0x7diamonds <togiabao222@gmail.com>",
+  "license": "MIT"
+}
